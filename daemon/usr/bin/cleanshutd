@@ -22,6 +22,7 @@ DISCLAIMER
 # default values
 daemon_active=1
 trigger_pin=4
+permission_pin=off
 led_pin=off
 poweroff_pin=off
 hold_time=1
@@ -51,10 +52,19 @@ if [ "$trigger_pin" != "$led_pin" ]; then
 fi
 
 raspi-gpio set $trigger_pin ip pu
-echo "monitoring BCM $trigger_pin"
+echo "monitoring BCM $trigger_pin (trigger)"
+
+if [ "$permission_pin" != "off" ]; then
+    raspi-gpio set $permission_pin ip pu
+    echo "monitoring BCM $permission_pin (permission)"
+fi
 
 trigger_pin_low() {
-    raspi-gpio get $trigger_pin | grep -q "level=0 fsel=0 func=INPUT"
+    if [ "$permission_pin" != "off" ]; then
+        (raspi-gpio get $permission_pin | grep -q "level=0 fsel=0 func=INPUT") && (raspi-gpio get $trigger_pin | grep -q "level=0 fsel=0 func=INPUT")
+    else
+        raspi-gpio get $trigger_pin | grep -q "level=0 fsel=0 func=INPUT"
+    fi
 }
 
 shutdown_trigger() {
